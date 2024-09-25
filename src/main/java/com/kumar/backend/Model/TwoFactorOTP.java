@@ -11,13 +11,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name="two_factor_otp")
-public class TwoFactorOTP {
+public class TwoFactorOTP implements Serializable {
 
     @Id
     private String id;
