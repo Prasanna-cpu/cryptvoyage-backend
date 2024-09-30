@@ -1,5 +1,6 @@
 package com.kumar.backend.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,23 +8,30 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 
-@Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "wallet")
-public class Wallet implements Serializable {
-
+@Entity
+@Table(name = "order_item")
+public class OrderItem implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @OneToOne
-    private User user;
+    private double quantity;
 
-    private BigDecimal balance;
+    @ManyToOne
+    private Coin coin;
+
+    private double buyPrice;
+
+    private double sellPrice;
+
+    @JsonIgnore
+    @OneToOne
+    private Order order;
+
 }

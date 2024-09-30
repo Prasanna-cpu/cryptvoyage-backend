@@ -7,6 +7,7 @@ import com.kumar.backend.Model.User;
 import com.kumar.backend.Model.Wallet;
 import com.kumar.backend.Repository.WalletRepository;
 import com.kumar.backend.Service.Abstraction.WalletService;
+import com.kumar.backend.Utils.Enums.OrderType;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,9 +66,21 @@ public class WalletServiceImplementation implements WalletService {
     }
 
     @Override
-    public Wallet orderPayment(Order order, User user) {
+    public Wallet orderPayment(Order order, User user) throws InsufficientBalanceException {
         Wallet wallet=getUserWallet(user);
 
-        return null;
+        if(order.getOrderType().equals(OrderType.BUY)){
+            BigDecimal newBalance=wallet.getBalance().subtract(order.getPrice());
+            if(newBalance.compareTo(order.getPrice())<0){
+                throw new InsufficientBalanceException("Insufficient Balance");
+            }
+            wallet.setBalance(newBalance);
+        }
+        else{
+            BigDecimal newBalance = wallet.getBalance().add(order.getPrice());
+            wallet.setBalance(newBalance);
+        }
+        walletRepository.save(wallet);
+        return wallet;
     }
 }

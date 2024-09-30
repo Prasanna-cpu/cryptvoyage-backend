@@ -15,7 +15,7 @@ public interface WalletService {
 
     Wallet wallletToWalletTransfer(User sender,Wallet recieverWallet,Long amount) throws InsufficientBalanceException;
 
-    Wallet orderPayment(Order order,User user);
+    Wallet orderPayment(Order order,User user) throws InsufficientBalanceException;
 
 
 }
