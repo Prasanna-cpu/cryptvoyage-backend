@@ -124,7 +124,7 @@ public class WithdrawalController {
             List<Withdrawal> withdrawals=withdrawalService.getUsersWithdrawalHistory(user);
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(new ApiResponse(withdrawals,HttpStatus.OK.value(), "Withdrawal history"))
+                    .body(new ApiResponse(withdrawals,HttpStatus.OK.value(), "Withdrawal history"));
         }
         catch(NonExistentUserException | NonExistentWithdrawalException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(null,HttpStatus.NOT_FOUND.value(),e.getMessage()));
@@ -142,12 +142,12 @@ public class WithdrawalController {
     ){
         try{
             User user=userService.findUserProfileByJwt(jwt);
-            List<Withdrawal> withdrawals=withdrawalService.getAllWithdrawalRequest(user);
+            List<Withdrawal> withdrawals=withdrawalService.getAllWithdrawalRequest();
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(new ApiResponse(withdrawals,HttpStatus.OK.value(), "Withdrawal history"))
+                    .body(new ApiResponse(withdrawals,HttpStatus.OK.value(), "Withdrawal history"));
         }
-        catch(NonExistentUserException | NonExistentWithdrawalException e){
+        catch(NonExistentUserException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(null,HttpStatus.NOT_FOUND.value(),e.getMessage()));
         }
         catch(Exception e){
