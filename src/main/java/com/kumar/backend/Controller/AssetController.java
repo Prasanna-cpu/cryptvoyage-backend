@@ -45,7 +45,7 @@ public class AssetController {
     }
 
     @GetMapping("/coin/{coinId}/user")
-    public ResponseEntity<ApiResponse> getAssetByUserIdAndCoinId(@PathVariable Long coinId, @RequestHeader("Authorization") String jwt){
+    public ResponseEntity<ApiResponse> getAssetByUserIdAndCoinId(@PathVariable String coinId, @RequestHeader("Authorization") String jwt){
         try{
             User user=userService.findUserProfileByJwt(jwt);
             Asset asset=assetService.getAssetByUserIdAndCoinId(user.getId(),coinId);
