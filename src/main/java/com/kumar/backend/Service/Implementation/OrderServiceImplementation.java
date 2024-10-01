@@ -96,6 +96,12 @@ public class OrderServiceImplementation implements OrderService {
         // TODO create asset
 
         Asset oldAsset=assetService.getAssetByUserIdAndCoinId(order.getUser().getId(),order.getOrderItem().getCoin().getId());
+        if(oldAsset==null){
+            assetService.createAsset(order.getUser(),order.getOrderItem().getCoin(),order.getOrderItem().getQuantity());
+        }
+        else{
+            assetService.updateAsset(oldAsset.getId(),order.getOrderItem().getQuantity());
+        }
 
         return savedOrder;
     }
