@@ -17,7 +17,7 @@ public interface OrderService {
 
     List<Order> getAllOrdersOfUser(Long userId,OrderType orderType,String assetSymbol) throws NonExistentUserException;
 
-    Order processOrder(Coin coin,double quantity,OrderType orderType,User user) throws InsufficientBalanceException, InsufficientQuantityException, InvalidOrderTypeException;
+    Order processOrder(Coin coin,double quantity,OrderType orderType,User user) throws InsufficientBalanceException, InsufficientQuantityException, InvalidOrderTypeException, NonExistentAssetException, NonExistentUserException;
 
 
 

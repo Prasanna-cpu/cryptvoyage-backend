@@ -16,7 +16,7 @@ public interface AssetRepository extends JpaRepository<Asset,Long> {
     Optional<List<Asset>> findAllByUserId(Long userId);
 
     @Query("select a from Asset a where a.user.id = ?1 and a.coin.id = ?2")
-    Optional<Asset> findByUserIdAndCoinId(Long userId, Long coinId);
+    Optional<Asset> findByUserIdAndCoinId(Long userId, String coinId);
 
 
 }

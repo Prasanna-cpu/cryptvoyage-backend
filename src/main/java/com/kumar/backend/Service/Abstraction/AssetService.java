@@ -1,6 +1,7 @@
 package com.kumar.backend.Service.Abstraction;
 
 import com.kumar.backend.Exception.NonExistentAssetException;
+import com.kumar.backend.Exception.NonExistentUserException;
 import com.kumar.backend.Model.Asset;
 import com.kumar.backend.Model.Coin;
 import com.kumar.backend.Model.User;
@@ -13,11 +14,12 @@ public interface AssetService {
 
     Asset getAssetById(Long assetId) throws NonExistentAssetException;
 
-    Asset getAssetByUserId(Long userId);
+    Asset getAssetByUserIdAndCoinId(Long userId, String coinId) throws NonExistentAssetException, NonExistentUserException;
 
-    List<Asset> getUsersAssets(Long userId);
+    List<Asset> getUsersAssets(Long userId) throws NonExistentUserException, NonExistentAssetException;
 
-    Asset updateAsset(Asset asset);
 
-    void deleteAsset(Asset asset);
+    Asset updateAsset(Long assetId, double quantity) throws NonExistentAssetException;
+
+    void deleteAsset(Long assetId) throws NonExistentAssetException;
 }

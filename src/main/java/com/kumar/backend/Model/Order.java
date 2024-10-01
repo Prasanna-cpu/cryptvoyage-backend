@@ -39,6 +39,9 @@ public class Order implements Serializable {
     @Column(nullable = false)
     private OrderStatus status;
 
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    private OrderItem orderItem;
+
 
 
 

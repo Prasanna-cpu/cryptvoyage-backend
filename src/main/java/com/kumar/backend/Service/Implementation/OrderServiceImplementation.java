@@ -1,12 +1,11 @@
 package com.kumar.backend.Service.Implementation;
 
 import com.kumar.backend.Exception.*;
-import com.kumar.backend.Model.Coin;
-import com.kumar.backend.Model.Order;
-import com.kumar.backend.Model.OrderItem;
-import com.kumar.backend.Model.User;
+import com.kumar.backend.Model.*;
+import com.kumar.backend.Repository.CoinRepository;
 import com.kumar.backend.Repository.OrderItemRepository;
 import com.kumar.backend.Repository.OrderRepository;
+import com.kumar.backend.Service.Abstraction.AssetService;
 import com.kumar.backend.Service.Abstraction.OrderService;
 import com.kumar.backend.Service.Abstraction.WalletService;
 import com.kumar.backend.Utils.Enums.OrderStatus;
@@ -25,10 +24,12 @@ import java.util.List;
 @Transactional(rollbackOn = Exception.class)
 @Slf4j
 public class OrderServiceImplementation implements OrderService {
+    private final CoinRepository coinRepository;
 
     private final OrderRepository orderRepository;
     private final WalletService walletService;
     private final OrderItemRepository orderItemRepository;
+    private final AssetService assetService;
 
     private OrderItem createOrderItem(Coin coin, double quantity , double buyPrice , double sellPrice) {
         OrderItem orderItem = new OrderItem();
@@ -76,7 +77,7 @@ public class OrderServiceImplementation implements OrderService {
     }
 
     @Transactional
-    public Order buyAsset(Coin coin, double quantity,User user) throws InsufficientQuantityException, InsufficientBalanceException {
+    public Order buyAsset(Coin coin, double quantity,User user) throws InsufficientQuantityException, InsufficientBalanceException, NonExistentAssetException, NonExistentUserException {
         if(quantity<=0){
             throw new InsufficientQuantityException("Quantity must be greater than 0");
         }
@@ -94,12 +95,14 @@ public class OrderServiceImplementation implements OrderService {
 
         // TODO create asset
 
+        Asset oldAsset=assetService.getAssetByUserIdAndCoinId(order.getUser().getId(),order.getOrderItem().getCoin().getId());
+
         return savedOrder;
     }
 
     @Override
     @Transactional
-    public Order processOrder(Coin coin, double quantity, OrderType orderType, User user) throws InsufficientBalanceException, InsufficientQuantityException, InvalidOrderTypeException {
+    public Order processOrder(Coin coin, double quantity, OrderType orderType, User user) throws InsufficientBalanceException, InsufficientQuantityException, InvalidOrderTypeException, NonExistentAssetException, NonExistentUserException {
         if(orderType.equals(OrderType.BUY)){
             return buyAsset(coin,quantity,user);
         }
