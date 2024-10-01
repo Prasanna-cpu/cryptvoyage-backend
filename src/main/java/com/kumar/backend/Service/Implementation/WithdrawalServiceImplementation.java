@@ -5,7 +5,7 @@ import com.kumar.backend.Exception.NonExistentWithdrawalException;
 import com.kumar.backend.Model.User;
 import com.kumar.backend.Model.Withdrawal;
 import com.kumar.backend.Repository.UserRepository;
-import com.kumar.backend.Service.Abstraction.WithdrawalRepository;
+import com.kumar.backend.Repository.WalletRepository;
 import com.kumar.backend.Service.Abstraction.WithdrawalService;
 import com.kumar.backend.Utils.Enums.WithdrawalStatus;
 import jakarta.transaction.Transactional;
@@ -23,7 +23,7 @@ import java.util.List;
 public class WithdrawalServiceImplementation implements WithdrawalService {
 
 
-    private final WithdrawalRepository withdrawalRepository;
+    private final WalletRepository.WithdrawalRepository withdrawalRepository;
     private final UserRepository userRepository;
 
     @Override
