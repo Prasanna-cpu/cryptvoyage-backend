@@ -64,7 +64,7 @@ public class OrderServiceImplementation implements OrderService {
     }
 
     @Transactional
-    public Order sellAsset(Coin coin,double quantity,User user) throws InsufficientQuantityException {
+    public Order sellAsset(Coin coin,double quantity,User user) throws InsufficientQuantityException, NonExistentAssetException, NonExistentUserException, InsufficientBalanceException, ExcessQuantityException {
         if(quantity<=0){
             throw new InsufficientQuantityException("Quantity must be greater than 0");
         }
@@ -73,7 +73,38 @@ public class OrderServiceImplementation implements OrderService {
 
         // TODO : implement sellAsset function
 
-        return null;
+        Asset assetToSell=assetService.getAssetByUserIdAndCoinId(user.getId(),coin.getId());
+
+        if(assetToSell!=null){
+
+            double buyPrice=assetToSell.getBuyPrice();
+
+            OrderItem orderItem=createOrderItem(coin,quantity,buyPrice,sellPrice);
+
+            Order order=createOrder(user,orderItem,OrderType.SELL);
+
+            orderItem.setOrder(order);
+
+            if(assetToSell.getQuantity()>=quantity){
+                order.setStatus(OrderStatus.SUCCESS);
+                order.setOrderType(OrderType.SELL);
+                Order savedOrder=orderRepository.save(order);
+
+                walletService.orderPayment(order,user);
+
+                Asset updatedAsset=assetService.updateAsset(assetToSell.getId(),-quantity);
+                if(updatedAsset.getQuantity()*coin.getCurrentPrice()<=1){
+                    assetService.deleteAsset(updatedAsset.getId());
+                }
+                return savedOrder;
+            }
+            throw new ExcessQuantityException("Selling asset quantity must be less than your current asset quantity");
+
+        }
+
+
+
+        throw new NonExistentAssetException("Asset not found");
     }
 
     @Transactional
@@ -97,10 +128,10 @@ public class OrderServiceImplementation implements OrderService {
 
         Asset oldAsset=assetService.getAssetByUserIdAndCoinId(order.getUser().getId(),order.getOrderItem().getCoin().getId());
         if(oldAsset==null){
-            assetService.createAsset(order.getUser(),order.getOrderItem().getCoin(),order.getOrderItem().getQuantity());
+            Asset assetCreated=assetService.createAsset(order.getUser(),order.getOrderItem().getCoin(),order.getOrderItem().getQuantity());
         }
         else{
-            assetService.updateAsset(oldAsset.getId(),order.getOrderItem().getQuantity());
+            Asset assetUpdated=assetService.updateAsset(oldAsset.getId(),order.getOrderItem().getQuantity());
         }
 
         return savedOrder;
@@ -108,7 +139,7 @@ public class OrderServiceImplementation implements OrderService {
 
     @Override
     @Transactional
-    public Order processOrder(Coin coin, double quantity, OrderType orderType, User user) throws InsufficientBalanceException, InsufficientQuantityException, InvalidOrderTypeException, NonExistentAssetException, NonExistentUserException {
+    public Order processOrder(Coin coin, double quantity, OrderType orderType, User user) throws InsufficientBalanceException, InsufficientQuantityException, InvalidOrderTypeException, NonExistentAssetException, NonExistentUserException, ExcessQuantityException {
         if(orderType.equals(OrderType.BUY)){
             return buyAsset(coin,quantity,user);
         }
