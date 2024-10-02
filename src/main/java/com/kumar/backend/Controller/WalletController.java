@@ -11,7 +11,6 @@ import com.kumar.backend.Service.Abstraction.PaymentService;
 import com.kumar.backend.Service.Abstraction.UserService;
 import com.kumar.backend.Service.Abstraction.WalletService;
 import com.kumar.backend.Service.Abstraction.WalletTransactionService;
-import com.kumar.backend.Service.Implementation.UserServiceImplementation;
 import com.razorpay.RazorpayException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
