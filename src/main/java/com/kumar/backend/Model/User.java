@@ -29,6 +29,9 @@ public class User implements Serializable {
     @Column(name = "email" , nullable = false ,unique = true)
     private String email;
 
+    @Column(name = "mobile" , nullable = false ,unique = true)
+    private String mobile;
+
     @Column(name = "password" , nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;

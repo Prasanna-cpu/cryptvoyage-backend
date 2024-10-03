@@ -1,23 +1,25 @@
 package com.kumar.backend.Controller;
 
+import com.kumar.backend.Exception.NonExistentEmailException;
 import com.kumar.backend.Exception.NonExistentTokenException;
 import com.kumar.backend.Exception.NonExistentUserException;
+import com.kumar.backend.Exception.NonExistentVerificationCodeException;
 import com.kumar.backend.Model.ForgetPasswordToken;
+import com.kumar.backend.Model.TwoFactorOTP;
 import com.kumar.backend.Model.User;
 import com.kumar.backend.Model.VerificationCode;
 import com.kumar.backend.Request.ForgetPasswordTokenRequest;
 import com.kumar.backend.Request.ResetPasswordRequest;
 import com.kumar.backend.Response.ApiResponse;
 import com.kumar.backend.Response.AuthResponse;
-import com.kumar.backend.Service.Abstraction.EmailSender;
-import com.kumar.backend.Service.Abstraction.ForgetPasswordService;
-import com.kumar.backend.Service.Abstraction.UserService;
-import com.kumar.backend.Service.Abstraction.VerificationCodeService;
+import com.kumar.backend.Service.Abstraction.*;
 import com.kumar.backend.Utils.Enums.VerificationType;
 import com.kumar.backend.Utils.OTP.OTPUtils;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -32,6 +34,8 @@ public class UserController {
     private final EmailSender emailSender;
 
     private final VerificationCodeService verificationCodeService;
+
+    private final TwoFactorOTPService twoFactorOTPService;
 
     private final ForgetPasswordService forgetPasswordService;
 
@@ -76,7 +80,7 @@ public class UserController {
                     .body(new ApiResponse(verificationCode,HttpStatus.OK.value(),"Verification code sent successfully"));
 
         }
-        catch(NonExistentUserException e){
+        catch(NonExistentUserException | NonExistentVerificationCodeException e){
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse(null, HttpStatus.NOT_FOUND.value(),e.getMessage()));
@@ -110,7 +114,7 @@ public class UserController {
             throw new Exception("Wrong otp");
 
         }
-        catch(NonExistentUserException e){
+        catch(NonExistentUserException | NonExistentVerificationCodeException e){
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse(null, HttpStatus.NOT_FOUND.value(),e.getMessage()));
@@ -154,7 +158,7 @@ public class UserController {
 
 
         }
-        catch(NonExistentUserException e){
+        catch(NonExistentUserException | NonExistentTokenException e){
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse(null,HttpStatus.NOT_FOUND.value(),e.getMessage()));
@@ -177,7 +181,12 @@ public class UserController {
                 userService.updatePassword(token.getUser(),request.getPassword());
                 return ResponseEntity.status(HttpStatus.ACCEPTED).body(new ApiResponse(null,HttpStatus.ACCEPTED.value(),"Password Updated" ));
             }
-            throw new Exception("Wrong otp");
+            throw new BadCredentialsException("Wrong otp");
+        }
+        catch(BadCredentialsException e){
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(null,HttpStatus.BAD_REQUEST.value(),e.getMessage()));
         }
         catch(NonExistentTokenException e){
             return ResponseEntity
@@ -191,5 +200,69 @@ public class UserController {
         }
     }
 
+    @PostMapping("/two-factor/otp/{otp}")
+    public ResponseEntity<? extends ApiResponse> verifyOTP(@PathVariable String otp,@RequestParam String id) {
+        try{
+            TwoFactorOTP twoFactorOTP=twoFactorOTPService.findById(id);
+
+            if(twoFactorOTPService.verifyTwoFactorOTP(twoFactorOTP,otp)){
+                AuthResponse authResponse=new AuthResponse();
+                authResponse.setMessage("Two factor authentication verified");
+                authResponse.setStatus(HttpStatus.OK.value());
+                authResponse.setTwoFactorEnabled(true);
+                authResponse.setToken(twoFactorOTP.getJwt());
+                return ResponseEntity
+                        .status(HttpStatus.OK)
+                        .body(authResponse);
+            }
+            throw new BadCredentialsException("Invalid OTP");
+        }
+        catch (NonExistentEmailException e){
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse(null,HttpStatus.NOT_FOUND.value(),e.getMessage()));
+        }
+        catch(BadCredentialsException e){
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(null,HttpStatus.BAD_REQUEST.value(),e.getMessage()));
+        }
+        catch (Exception e){
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(null,HttpStatus.INTERNAL_SERVER_ERROR.value(),e.getMessage()));
+        }
+
+
+
+    }
+
+    @GetMapping("/email/{email}")
+    public ResponseEntity<? extends ApiResponse> findUserByEmail(@PathVariable String email,@RequestHeader("Authorization") String jwt) {
+        try{
+            User user=userService.findUserByEmail(email);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(user,HttpStatus.OK.value(),"User retrieved"));
+        }
+        catch(NonExistentUserException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(null,HttpStatus.NOT_FOUND.value(),e.getMessage()));
+        }
+        catch(Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(null,HttpStatus.INTERNAL_SERVER_ERROR.value(),e.getMessage()));
+        }
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<? extends ApiResponse> findUserById(@PathVariable Long userId,@RequestHeader("Authorization") String jwt) {
+        try{
+            User user=userService.findUserById(userId);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(user,HttpStatus.OK.value(),"User retrieved"));
+        }
+        catch(NonExistentUserException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(null,HttpStatus.NOT_FOUND.value(),e.getMessage()));
+        }
+        catch(Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(null,HttpStatus.INTERNAL_SERVER_ERROR.value(),e.getMessage()));
+        }
+    }
 
 }

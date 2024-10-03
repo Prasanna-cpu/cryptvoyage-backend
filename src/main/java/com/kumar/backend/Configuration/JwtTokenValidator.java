@@ -34,11 +34,11 @@ public class JwtTokenValidator extends OncePerRequestFilter {
         String jwt=request.getHeader(JwtConstant.JWT_HEADER);
 
 
-        if(jwt!=null && jwt.isEmpty()){
+        if(jwt!=null){
             jwt=jwt.substring(7);
 
             try{
-                SecretKey keys= Keys.hmacShaKeyFor(secretKey.getBytes());
+                SecretKey keys= Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
                 Claims claims= Jwts
                         .parserBuilder()
                         .setSigningKey(keys)
@@ -51,6 +51,7 @@ public class JwtTokenValidator extends OncePerRequestFilter {
                 List<GrantedAuthority> authorityList= AuthorityUtils.commaSeparatedStringToAuthorityList(authorities);
                 Authentication authentication=new UsernamePasswordAuthenticationToken(
                         email,
+                        null,
                         authorityList
                 );
                 SecurityContextHolder.getContext().setAuthentication(authentication);

@@ -35,6 +35,11 @@ public class VerificationCodeServiceImplementation implements VerificationCodeSe
     }
 
     @Override
+    public Boolean verifyOtp(String otp, VerificationCode verificationCode) {
+        return otp.equals(verificationCode.getOtp());
+    }
+
+    @Override
     public VerificationCode getVerificationCodeById(Long id) throws NonExistentVerificationCodeException {
 
         VerificationCode verificationCode=verificationCodeRepository

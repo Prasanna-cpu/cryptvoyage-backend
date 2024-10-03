@@ -10,7 +10,7 @@ public interface UserService {
 
     User findUserByEmail(String email) throws NonExistentUserException;
 
-    User findUserById(Long userId);
+    User findUserById(Long userId) throws NonExistentUserException;
 
     User enableTwoFactorAuthentication(User user, VerificationType verificationType,String sendTo);
 

@@ -22,7 +22,7 @@ public class CoinController {
     private final ObjectMapper objectMapper;
 
     @GetMapping("/coinlist")
-    public ResponseEntity<ApiResponse> getCoinList(@RequestParam("page") int page)  {
+    public ResponseEntity<ApiResponse> getCoinList(@RequestParam(name="page",required = false) int page)  {
 
         try {
 
@@ -43,7 +43,7 @@ public class CoinController {
     }
 
     @GetMapping("/{coinId}/chart")
-    public ResponseEntity<ApiResponse> getMarketChart(@PathVariable String coinId,@RequestParam("days") int days)  {
+    public ResponseEntity<ApiResponse> getMarketChart(@PathVariable String coinId,@RequestParam(name="days",required = false) int days)  {
 
         try{
 
@@ -66,7 +66,7 @@ public class CoinController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ApiResponse> searchCoin(@RequestParam("q") String keyword){
+    public ResponseEntity<ApiResponse> searchCoin(@RequestParam(name="q",required = false) String keyword){
         try{
             String coin=coinService.searchCoin(keyword);
 

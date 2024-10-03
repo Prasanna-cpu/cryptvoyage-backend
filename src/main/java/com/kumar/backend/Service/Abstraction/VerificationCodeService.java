@@ -9,6 +9,7 @@ public interface VerificationCodeService {
 
     VerificationCode sendVerificationCode(VerificationType verificationType, User user);
 
+    Boolean verifyOtp(String otp, VerificationCode verificationCode);
 
     VerificationCode getVerificationCodeById(Long id) throws NonExistentVerificationCodeException;
 

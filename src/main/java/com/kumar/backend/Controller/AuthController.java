@@ -14,6 +14,7 @@ import com.kumar.backend.Response.ApiResponse;
 import com.kumar.backend.Response.AuthResponse;
 import com.kumar.backend.Service.Abstraction.EmailSender;
 import com.kumar.backend.Service.Abstraction.TwoFactorOTPService;
+import com.kumar.backend.Service.Abstraction.WatchListService;
 import com.kumar.backend.Service.Implementation.CustomUserDetailsService;
 import com.kumar.backend.Utils.OTP.OTPUtils;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -33,8 +35,10 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final CustomUserDetailsService customUserDetailsService;
-    private final TwoFactorOTPService twoFactorOTPService;
     private final EmailSender emailSender;
+    private final TwoFactorOTPService twoFactorOTPService;
+    private final PasswordEncoder passwordEncoder;
+    private final WatchListService watchListService;
 
     @PostMapping("/register")
     public ResponseEntity<? extends ApiResponse> register(@RequestBody UserRegisterRequest userRegisterRequest)  {
@@ -50,9 +54,12 @@ public class AuthController {
 
 
             newUser.setEmail(userRegisterRequest.getEmail());
-            newUser.setPassword(userRegisterRequest.getPassword());
+            newUser.setPassword(passwordEncoder.encode(userRegisterRequest.getPassword()));
             newUser.setFullname(userRegisterRequest.getFullname());
+            newUser.setMobile(userRegisterRequest.getMobile());
             User user=userRepository.save(newUser);
+
+            watchListService.createWatchList(user);
 
             Authentication auth=new UsernamePasswordAuthenticationToken(
                     user.getEmail(),
@@ -142,7 +149,7 @@ public class AuthController {
         if(userDetails==null){
             throw new BadCredentialsException("Invalid username / password");
         }
-        if(!password.equals(userDetails.getPassword())){
+        if(!passwordEncoder.matches(password,userDetails.getPassword())){
             throw new BadCredentialsException("Invalid  password");
         }
 
@@ -150,42 +157,42 @@ public class AuthController {
         return auth;
     }
 
-    @PostMapping("/two-factor/otp/{otp}")
-    public ResponseEntity<? extends ApiResponse> verifyOTP(@PathVariable String otp,@RequestParam String id) {
-        try{
-            TwoFactorOTP twoFactorOTP=twoFactorOTPService.findById(id);
-
-            if(twoFactorOTPService.verifyTwoFactorOTP(twoFactorOTP,otp)){
-                AuthResponse authResponse=new AuthResponse();
-                authResponse.setMessage("Two factor authentication verified");
-                authResponse.setStatus(HttpStatus.OK.value());
-                authResponse.setTwoFactorEnabled(true);
-                authResponse.setToken(twoFactorOTP.getJwt());
-                return ResponseEntity
-                        .status(HttpStatus.OK)
-                        .body(authResponse);
-            }
-            throw new BadCredentialsException("Invalid OTP");
-        }
-        catch (NonExistentEmailException e){
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse(null,HttpStatus.NOT_FOUND.value(),e.getMessage()));
-        }
-        catch(BadCredentialsException e){
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse(null,HttpStatus.BAD_REQUEST.value(),e.getMessage()));
-        }
-        catch (Exception e){
-             return ResponseEntity
-                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                     .body(new ApiResponse(null,HttpStatus.INTERNAL_SERVER_ERROR.value(),e.getMessage()));
-        }
-
-
-
-    }
+//    @PostMapping("/two-factor/otp/{otp}")
+//    public ResponseEntity<? extends ApiResponse> verifyOTP(@PathVariable String otp,@RequestParam String id) {
+//        try{
+//            TwoFactorOTP twoFactorOTP=twoFactorOTPService.findById(id);
+//
+//            if(twoFactorOTPService.verifyTwoFactorOTP(twoFactorOTP,otp)){
+//                AuthResponse authResponse=new AuthResponse();
+//                authResponse.setMessage("Two factor authentication verified");
+//                authResponse.setStatus(HttpStatus.OK.value());
+//                authResponse.setTwoFactorEnabled(true);
+//                authResponse.setToken(twoFactorOTP.getJwt());
+//                return ResponseEntity
+//                        .status(HttpStatus.OK)
+//                        .body(authResponse);
+//            }
+//            throw new BadCredentialsException("Invalid OTP");
+//        }
+//        catch (NonExistentEmailException e){
+//            return ResponseEntity
+//                    .status(HttpStatus.NOT_FOUND)
+//                    .body(new ApiResponse(null,HttpStatus.NOT_FOUND.value(),e.getMessage()));
+//        }
+//        catch(BadCredentialsException e){
+//            return ResponseEntity
+//                    .status(HttpStatus.BAD_REQUEST)
+//                    .body(new ApiResponse(null,HttpStatus.BAD_REQUEST.value(),e.getMessage()));
+//        }
+//        catch (Exception e){
+//             return ResponseEntity
+//                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                     .body(new ApiResponse(null,HttpStatus.INTERNAL_SERVER_ERROR.value(),e.getMessage()));
+//        }
+//
+//
+//
+//    }
 
 
 }
