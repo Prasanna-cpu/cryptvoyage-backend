@@ -50,9 +50,7 @@ public class AssetServiceImplementation implements AssetService {
                 ()->new NonExistentUserException("User with id " + userId + " not found")
         );
 
-        Asset asset=assetRepository.findByUserIdAndCoinId(user.getId(),coinId).orElseThrow(
-                ()->new NonExistentAssetException("Asset not found")
-        );
+        Asset asset=assetRepository.findByUserIdAndCoinId(user.getId(),coinId).orElse(null);
 
         return asset;
 

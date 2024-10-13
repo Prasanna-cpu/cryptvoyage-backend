@@ -25,5 +25,5 @@ public class Wallet implements Serializable {
     @OneToOne
     private User user;
 
-    private BigDecimal balance;
+    private BigDecimal balance=BigDecimal.ZERO;
 }

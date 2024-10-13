@@ -25,7 +25,7 @@ public class WalletTransaction implements Serializable {
     @ManyToOne
     private Wallet wallet;
 
-    private WalletTransactionType type;
+    private WalletTransactionType type=WalletTransactionType.WALLET_TRANSFER;
 
     private LocalDate date;
 

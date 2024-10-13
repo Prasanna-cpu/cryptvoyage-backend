@@ -51,7 +51,7 @@ public class WithdrawalServiceImplementation implements WithdrawalService {
             withdrawal.setStatus(WithdrawalStatus.SUCCESS);
         }
         else{
-            withdrawal.setStatus(WithdrawalStatus.PENDING);
+            withdrawal.setStatus(WithdrawalStatus.DENIED);
         }
 
         Withdrawal newWithdrawal=withdrawalRepository.save(withdrawal);

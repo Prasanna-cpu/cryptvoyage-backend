@@ -5,7 +5,9 @@ import com.kumar.backend.Exception.NonExistentWalletException;
 import com.kumar.backend.Model.Order;
 import com.kumar.backend.Model.User;
 import com.kumar.backend.Model.Wallet;
+import com.kumar.backend.Model.WalletTransaction;
 import com.kumar.backend.Repository.WalletRepository;
+import com.kumar.backend.Repository.WalletTransactionRepository;
 import com.kumar.backend.Service.Abstraction.WalletService;
 import com.kumar.backend.Utils.Enums.OrderType;
 import jakarta.transaction.Transactional;
@@ -14,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Service
 @Transactional(rollbackOn = Exception.class)
@@ -23,6 +26,7 @@ public class WalletServiceImplementation implements WalletService {
 
 
     private final WalletRepository walletRepository;
+    private final WalletTransactionRepository walletTransactionRepository;
 
     @Override
     public Wallet getUserWallet(User user) {
@@ -30,6 +34,7 @@ public class WalletServiceImplementation implements WalletService {
         if(wallet==null){
             wallet=new Wallet();
             wallet.setUser(user);
+            walletRepository.save(wallet);
         }
         return wallet;
     }
@@ -67,20 +72,48 @@ public class WalletServiceImplementation implements WalletService {
 
     @Override
     public Wallet orderPayment(Order order, User user) throws InsufficientBalanceException {
-        Wallet wallet=getUserWallet(user);
+        Wallet wallet = getUserWallet(user);
 
-        if(order.getOrderType().equals(OrderType.BUY)){
-            BigDecimal newBalance=wallet.getBalance().subtract(order.getPrice());
-            if(newBalance.compareTo(order.getPrice())<0){
+        // Null check for order and its related fields
+        if (order == null || order.getOrderItem() == null || order.getOrderItem().getCoin() == null) {
+            throw new IllegalArgumentException("Order, order item, or coin cannot be null");
+        }
+
+        // Null check for order price
+        if (order.getPrice() == null) {
+            throw new IllegalArgumentException("Order price cannot be null");
+        }
+
+        WalletTransaction walletTransaction = new WalletTransaction();
+        walletTransaction.setWallet(wallet);
+        walletTransaction.setPurpose(order.getOrderType() + " " + order.getOrderItem().getCoin().getId());
+        walletTransaction.setDate(LocalDate.now());
+        walletTransaction.setTransferId(order.getOrderItem().getCoin().getSymbol());
+
+        BigDecimal newBalance;
+
+        if (order.getOrderType().equals(OrderType.BUY)) {
+            // Subtract the order price from the wallet balance
+            newBalance = wallet.getBalance().subtract(order.getPrice());
+
+            // Check if the new balance is below zero, indicating insufficient funds
+            if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
                 throw new InsufficientBalanceException("Insufficient Balance");
             }
+
             wallet.setBalance(newBalance);
         }
-        else{
-            BigDecimal newBalance = wallet.getBalance().add(order.getPrice());
+        else if (order.getOrderType().equals(OrderType.SELL)) {
+            // Add the order price to the wallet balance for a sell order
+            newBalance = wallet.getBalance().add(order.getPrice());
             wallet.setBalance(newBalance);
         }
+
+        // Save the transaction and updated wallet
+        walletTransactionRepository.save(walletTransaction);
         walletRepository.save(wallet);
+
         return wallet;
     }
+
 }

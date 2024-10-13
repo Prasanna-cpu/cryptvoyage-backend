@@ -14,6 +14,7 @@ import com.kumar.backend.Response.ApiResponse;
 import com.kumar.backend.Response.AuthResponse;
 import com.kumar.backend.Service.Abstraction.EmailSender;
 import com.kumar.backend.Service.Abstraction.TwoFactorOTPService;
+import com.kumar.backend.Service.Abstraction.WalletService;
 import com.kumar.backend.Service.Abstraction.WatchListService;
 import com.kumar.backend.Service.Implementation.CustomUserDetailsService;
 import com.kumar.backend.Utils.OTP.OTPUtils;
@@ -39,6 +40,7 @@ public class AuthController {
     private final TwoFactorOTPService twoFactorOTPService;
     private final PasswordEncoder passwordEncoder;
     private final WatchListService watchListService;
+    private final WalletService walletService;
 
     @PostMapping("/register")
     public ResponseEntity<? extends ApiResponse> register(@RequestBody UserRegisterRequest userRegisterRequest)  {
@@ -60,6 +62,8 @@ public class AuthController {
             User user=userRepository.save(newUser);
 
             watchListService.createWatchList(user);
+
+
 
             Authentication auth=new UsernamePasswordAuthenticationToken(
                     user.getEmail(),

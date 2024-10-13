@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -23,7 +24,7 @@ public class Asset implements Serializable {
 
     private double quantity;
 
-    private double buyPrice;
+    private double buyPrice= BigDecimal.ZERO.doubleValue();
 
     public Asset(User user, Coin coin, double quantity) {
         this.user = user;

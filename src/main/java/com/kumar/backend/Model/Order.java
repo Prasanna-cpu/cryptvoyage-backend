@@ -32,7 +32,7 @@ public class Order implements Serializable {
     private OrderType orderType;
 
     @Column(nullable = false)
-    private BigDecimal price;
+    private BigDecimal price=BigDecimal.ZERO;
 
     private LocalDateTime timestamp=LocalDateTime.now();
 

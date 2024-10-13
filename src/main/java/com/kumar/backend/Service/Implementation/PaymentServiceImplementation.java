@@ -48,6 +48,7 @@ public class PaymentServiceImplementation implements PaymentService {
         paymentOrder.setUser(user);
         paymentOrder.setPaymentMethod(paymentMethod);
         paymentOrder.setAmount(amount);
+        paymentOrder.setStatus(PaymentOrderStatus.PENDING);
 
         PaymentOrder newOrder=paymentRepository.save(paymentOrder);
         return newOrder;
@@ -63,6 +64,10 @@ public class PaymentServiceImplementation implements PaymentService {
 
     @Override
     public Boolean ProceedPaymentOrder(PaymentOrder paymentOrder, String paymentId) throws RazorpayException {
+
+        if(paymentOrder.getStatus()==null){
+            paymentOrder.setStatus(PaymentOrderStatus.PENDING);
+        }
 
         if(paymentOrder.getStatus().equals(PaymentOrderStatus.PENDING)){
 
@@ -147,8 +152,12 @@ public class PaymentServiceImplementation implements PaymentService {
         paymentLinkRequest.put("reminder_enable",true);
 
         // Set the callback URL and method
-        paymentLinkRequest.put("callback_url","http://localhost:3000/wallet/"+ orderId);
+//        paymentLinkRequest.put("callback_url","http://localhost:3000/wallet/"+orderId);
+        paymentLinkRequest.put("callback_url","http://localhost:3000/wallet?order_id"+ orderId);
         paymentLinkRequest.put("callback_method","get");
+
+
+
         return paymentLinkRequest;
     }
 

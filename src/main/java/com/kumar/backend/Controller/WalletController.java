@@ -7,16 +7,15 @@ import com.kumar.backend.Exception.NonExistentWalletException;
 import com.kumar.backend.Model.*;
 import com.kumar.backend.Response.ApiResponse;
 import com.kumar.backend.Response.PaymentResponse;
-import com.kumar.backend.Service.Abstraction.PaymentService;
-import com.kumar.backend.Service.Abstraction.UserService;
-import com.kumar.backend.Service.Abstraction.WalletService;
-import com.kumar.backend.Service.Abstraction.WalletTransactionService;
+import com.kumar.backend.Service.Abstraction.*;
+import com.kumar.backend.Utils.Enums.WalletTransactionType;
 import com.razorpay.RazorpayException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -27,6 +26,7 @@ public class WalletController {
     private final WalletService walletService;
     private final UserService userService;
     private final PaymentService paymentService;
+    private final OrderService orderService;
     private final WalletTransactionService walletTransactionService;
 
     @GetMapping("/get-wallet")
@@ -50,7 +50,7 @@ public class WalletController {
         }
     }
 
-    @GetMapping("/transfer/wallet/{walletId}")
+    @PutMapping("/transfer/wallet/{walletId}")
     public ResponseEntity<ApiResponse> walletToWalletTransfer(
             @RequestHeader("Authorization") String jwt,
             @PathVariable Long walletId,
@@ -61,6 +61,13 @@ public class WalletController {
             Wallet receiverWallet=walletService.findWalletById(walletId);
 
             Wallet  wallet=walletService.wallletToWalletTransfer(sendUser, receiverWallet, request.getAmount());
+
+            WalletTransaction walletTransaction=walletTransactionService.createTransaction(
+                    wallet,
+                    WalletTransactionType.WALLET_TRANSFER,receiverWallet.getId().toString(),
+                    request.getPurpose(),
+                    -request.getAmount()
+            );
 
             return ResponseEntity
                     .status(HttpStatus.OK)
@@ -89,7 +96,10 @@ public class WalletController {
 
         try{
             User user=userService.findUserProfileByJwt(jwt);
-            return null;
+            Order order=orderService.getOrderById(orderId);
+
+            Wallet wallet = walletService.orderPayment(order,user);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(wallet,HttpStatus.OK.value(),"Payment Successful"));
 
         }
         catch(NonExistentUserException e){
@@ -105,14 +115,19 @@ public class WalletController {
     }
 
     @PutMapping("/deposit/amount/{amount}")
-    public ResponseEntity<PaymentResponse> deposit(@RequestHeader("Authorization") String jwt,@PathVariable Long amount) throws NonExistentUserException {
-        User user=userService.findUserProfileByJwt(jwt);
-        Wallet wallet = walletService.getUserWallet(user);
-        PaymentResponse res = new PaymentResponse();
-        res.setPaymentUrl(res.getPaymentUrl());
-        walletService.addBalanceToWallet(wallet, amount);
+    public ResponseEntity<PaymentResponse> deposit(@RequestHeader("Authorization") String jwt,@PathVariable Long amount) throws Exception {
+       try{
+           User user=userService.findUserProfileByJwt(jwt);
+           Wallet wallet = walletService.getUserWallet(user);
+           PaymentResponse res = new PaymentResponse();
+           res.setPaymentUrl(res.getPaymentUrl());
+           walletService.addBalanceToWallet(wallet, amount);
 
-        return new ResponseEntity<>(res,HttpStatus.OK);
+           return new ResponseEntity<>(res,HttpStatus.OK);
+       }
+       catch(Exception e){
+           throw new Exception(e);
+       }
     }
 
 
@@ -130,6 +145,10 @@ public class WalletController {
             Boolean status=paymentService.ProceedPaymentOrder(order,paymentId);
             PaymentResponse res = new PaymentResponse();
             res.setPaymentUrl(res.getPaymentUrl());
+
+            if(wallet.getBalance()==null){
+                wallet.setBalance(BigDecimal.valueOf(0L));
+            }
 
             if(status){
                 wallet=walletService.addBalanceToWallet(wallet, order.getAmount());

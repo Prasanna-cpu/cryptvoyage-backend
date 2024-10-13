@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/assets")
 @RequiredArgsConstructor
@@ -20,6 +22,23 @@ public class AssetController {
     private final AssetService assetService;
 
     private final UserService userService;
+
+
+    @GetMapping("/user")
+    public ResponseEntity<ApiResponse> getAssets(@RequestHeader("Authorization") String jwt) {
+        try {
+            List<Asset> assets = assetService.getUsersAssets(userService.findUserProfileByJwt(jwt).getId());
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(
+                            new ApiResponse(assets, HttpStatus.OK.value(), "Assets retrieved successfully")
+                    );
+        } catch (NonExistentUserException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(null, HttpStatus.NOT_FOUND.value(), e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(null, HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
+        }
+    }
 
 
     @GetMapping("/asset/{assetId}")

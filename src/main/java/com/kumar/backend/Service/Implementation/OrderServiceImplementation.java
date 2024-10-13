@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestHeader;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -42,13 +43,23 @@ public class OrderServiceImplementation implements OrderService {
 
     @Override
     public Order createOrder(User user, OrderItem orderItem, OrderType orderType) {
-        double price=orderItem.getCoin().getCurrentPrice()*orderItem.getQuantity();
+        double price=orderItem.getCoin().getCurrentPrice();
+        if (price <= 0) {
+            throw new IllegalArgumentException("Invalid coin price. It must be greater than 0.");
+        }
         Order order=new Order();
         order.setUser(user);
         order.setOrderType(orderType);
         order.setTimestamp(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
-        return order;
+
+        order.setOrderItem(orderItem);
+        orderItem.setOrder(order);
+
+        Order savedOrder=orderRepository.save(order);
+        OrderItem savedOrderItem=orderItemRepository.save(orderItem);
+
+        return savedOrder;
     }
 
     @Override
