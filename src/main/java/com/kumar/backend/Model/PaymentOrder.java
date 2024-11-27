@@ -18,12 +18,13 @@ import java.io.Serializable;
 public class PaymentOrder implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private Long amount;
 
     private PaymentOrderStatus status;
+
 
     private PaymentMethod paymentMethod;
 

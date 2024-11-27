@@ -19,7 +19,7 @@ import java.time.LocalDate;
 public class WalletTransaction implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne

@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class Withdrawal implements Serializable{
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private WithdrawalStatus status;

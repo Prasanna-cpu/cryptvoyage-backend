@@ -18,7 +18,6 @@ import java.io.Serializable;
 public class ForgetPasswordToken implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private String id;
 
     @OneToOne

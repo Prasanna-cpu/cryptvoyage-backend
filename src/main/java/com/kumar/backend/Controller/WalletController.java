@@ -115,7 +115,7 @@ public class WalletController {
     }
 
     @PutMapping("/deposit/amount/{amount}")
-    public ResponseEntity<PaymentResponse> deposit(@RequestHeader("Authorization") String jwt,@PathVariable Long amount) throws Exception {
+    public ResponseEntity<String> deposit(@RequestHeader("Authorization") String jwt,@PathVariable Long amount) throws Exception {
        try{
            User user=userService.findUserProfileByJwt(jwt);
            Wallet wallet = walletService.getUserWallet(user);
@@ -123,7 +123,7 @@ public class WalletController {
            res.setPaymentUrl(res.getPaymentUrl());
            walletService.addBalanceToWallet(wallet, amount);
 
-           return new ResponseEntity<>(res,HttpStatus.OK);
+           return new ResponseEntity<>("Money added Successfully",HttpStatus.OK);
        }
        catch(Exception e){
            throw new Exception(e);
@@ -139,7 +139,7 @@ public class WalletController {
     ){
         try{
             User user=userService.findUserProfileByJwt(jwt);
-            Wallet wallet=walletService.findWalletById(user.getId());
+            Wallet wallet=walletService.getUserWallet(user);
 
             PaymentOrder order = paymentService.getPaymentOrderById(orderId);
             Boolean status=paymentService.ProceedPaymentOrder(order,paymentId);
@@ -154,10 +154,12 @@ public class WalletController {
                 wallet=walletService.addBalanceToWallet(wallet, order.getAmount());
             }
 
+
+
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(new ApiResponse(wallet,HttpStatus.ACCEPTED.value(),"Money deposited successfully"));
 
         }
-        catch(NonExistentUserException | NonExistentWalletException | NonExistentPaymentOrderException e){
+        catch(NonExistentUserException | NonExistentPaymentOrderException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(null,HttpStatus.NOT_FOUND.value(),e.getMessage()));
         }
         catch(RazorpayException e){

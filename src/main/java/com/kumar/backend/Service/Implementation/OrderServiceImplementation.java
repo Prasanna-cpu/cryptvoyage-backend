@@ -8,8 +8,10 @@ import com.kumar.backend.Repository.OrderRepository;
 import com.kumar.backend.Service.Abstraction.AssetService;
 import com.kumar.backend.Service.Abstraction.OrderService;
 import com.kumar.backend.Service.Abstraction.WalletService;
+import com.kumar.backend.Service.Abstraction.WalletTransactionService;
 import com.kumar.backend.Utils.Enums.OrderStatus;
 import com.kumar.backend.Utils.Enums.OrderType;
+import com.kumar.backend.Utils.Enums.WalletTransactionType;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,9 @@ public class OrderServiceImplementation implements OrderService {
     private final OrderItemRepository orderItemRepository;
     private final AssetService assetService;
 
+    private final WalletTransactionService walletTransactionService;
+
+
     private OrderItem createOrderItem(Coin coin, double quantity , double buyPrice , double sellPrice) {
         OrderItem orderItem = new OrderItem();
         orderItem.setQuantity(quantity);
@@ -52,7 +57,7 @@ public class OrderServiceImplementation implements OrderService {
         order.setOrderType(orderType);
         order.setTimestamp(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
-
+        order.setPrice(BigDecimal.valueOf(price));
         order.setOrderItem(orderItem);
         orderItem.setOrder(order);
 
@@ -101,7 +106,15 @@ public class OrderServiceImplementation implements OrderService {
                 order.setOrderType(OrderType.SELL);
                 Order savedOrder=orderRepository.save(order);
 
-                walletService.orderPayment(order,user);
+                Wallet wallet=walletService.orderPayment(order,user);
+
+                WalletTransaction walletTransaction=walletTransactionService.createTransaction(
+                        wallet,
+                        WalletTransactionType.SELL_ASSET,
+                        null,
+                        "Sell asset",
+                        (long) (quantity*sellPrice)
+                );
 
                 Asset updatedAsset=assetService.updateAsset(assetToSell.getId(),-quantity);
                 if(updatedAsset.getQuantity()*coin.getCurrentPrice()<=1){
@@ -129,7 +142,19 @@ public class OrderServiceImplementation implements OrderService {
         OrderItem orderItem=createOrderItem(coin,quantity,buyPrice,0);
         Order order=createOrder(user,orderItem,OrderType.BUY);
 
-        walletService.orderPayment(order,user);
+        Wallet wallet=walletService.orderPayment(order,user);
+
+        Long totalAmount=(long) (quantity*buyPrice);
+
+        WalletTransaction walletTransaction=walletTransactionService.createTransaction(
+                wallet,
+                WalletTransactionType.BUY_ASSET,
+                null,
+                "Buy asset",
+                totalAmount
+        );
+
+
 
         order.setStatus(OrderStatus.SUCCESS);
         order.setOrderType(OrderType.BUY);
@@ -151,7 +176,9 @@ public class OrderServiceImplementation implements OrderService {
     @Override
     @Transactional
     public Order processOrder(Coin coin, double quantity, OrderType orderType, User user) throws InsufficientBalanceException, InsufficientQuantityException, InvalidOrderTypeException, NonExistentAssetException, NonExistentUserException, ExcessQuantityException {
+
         if(orderType.equals(OrderType.BUY)){
+
             return buyAsset(coin,quantity,user);
         }
         else if(orderType==OrderType.SELL){

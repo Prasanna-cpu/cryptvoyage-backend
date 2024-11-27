@@ -9,7 +9,9 @@ import com.kumar.backend.Model.WalletTransaction;
 import com.kumar.backend.Repository.WalletRepository;
 import com.kumar.backend.Repository.WalletTransactionRepository;
 import com.kumar.backend.Service.Abstraction.WalletService;
+import com.kumar.backend.Service.Abstraction.WalletTransactionService;
 import com.kumar.backend.Utils.Enums.OrderType;
+import com.kumar.backend.Utils.Enums.WalletTransactionType;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,7 @@ public class WalletServiceImplementation implements WalletService {
 
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;
+    private final WalletTransactionService walletTransactionService;
 
     @Override
     public Wallet getUserWallet(User user) {
@@ -45,6 +48,8 @@ public class WalletServiceImplementation implements WalletService {
         BigDecimal newBalance=balance.add(BigDecimal.valueOf(money));
         wallet.setBalance(newBalance);
         Wallet savedWallet=walletRepository.save(wallet);
+
+        WalletTransaction walletTransaction=walletTransactionService.createTransaction(savedWallet, WalletTransactionType.ADD_MONEY, null, "Add Money", money);
         return savedWallet;
     }
 
@@ -74,8 +79,15 @@ public class WalletServiceImplementation implements WalletService {
     public Wallet orderPayment(Order order, User user) throws InsufficientBalanceException {
         Wallet wallet = getUserWallet(user);
 
+        WalletTransaction walletTransaction=new WalletTransaction();
+        walletTransaction.setWallet(wallet);
+        walletTransaction.setPurpose(order.getOrderType()+ " " + order.getOrderItem().getCoin().getId() );
+
+        walletTransaction.setDate(LocalDate.now());
+        walletTransaction.setTransferId(order.getOrderItem().getCoin().getSymbol());
+
         // Null check for order and its related fields
-        if (order == null || order.getOrderItem() == null || order.getOrderItem().getCoin() == null) {
+        if (order.getOrderItem() == null || order.getOrderItem().getCoin() == null) {
             throw new IllegalArgumentException("Order, order item, or coin cannot be null");
         }
 
@@ -84,11 +96,7 @@ public class WalletServiceImplementation implements WalletService {
             throw new IllegalArgumentException("Order price cannot be null");
         }
 
-        WalletTransaction walletTransaction = new WalletTransaction();
-        walletTransaction.setWallet(wallet);
-        walletTransaction.setPurpose(order.getOrderType() + " " + order.getOrderItem().getCoin().getId());
-        walletTransaction.setDate(LocalDate.now());
-        walletTransaction.setTransferId(order.getOrderItem().getCoin().getSymbol());
+
 
         BigDecimal newBalance;
 

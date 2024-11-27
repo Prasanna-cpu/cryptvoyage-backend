@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 public class Order implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
@@ -31,13 +31,13 @@ public class Order implements Serializable {
     @Column(nullable = false)
     private OrderType orderType;
 
-    @Column(nullable = false)
-    private BigDecimal price=BigDecimal.ZERO;
+    private BigDecimal price;
 
-    private LocalDateTime timestamp=LocalDateTime.now();
+    private LocalDateTime timestamp;
 
     @Column(nullable = false)
-    private OrderStatus status;
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status=OrderStatus.PENDING;
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private OrderItem orderItem;

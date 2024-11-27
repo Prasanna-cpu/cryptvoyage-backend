@@ -15,6 +15,7 @@ import java.util.List;
 @RequestMapping("/api/coins")
 @RestController
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class CoinController {
 
     private final CoinService coinService;

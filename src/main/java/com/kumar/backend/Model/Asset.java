@@ -18,7 +18,7 @@ import java.math.BigDecimal;
 public class Asset implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
 
